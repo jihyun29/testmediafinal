@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import io from "socket.io-client";
-import mediasoupClient from "mediasoup-client";
+import * as mediasoupClient from "mediasoup-client";
 
 const App = () => {
   const localVideoRef = useRef(null);
@@ -11,7 +11,7 @@ const App = () => {
   let consumerTransport;
   let producer;
   let consumer;
-  const websocketURL = "https://localhost:3000/mediasoup";
+  const websocketURL = "http://localhost:3001";
   let params = {
     // mediasoup params
     encodings: [
@@ -45,8 +45,9 @@ const App = () => {
     console.log(socketId);
   });
 
-  const streamSuccess = async (stream) => {
+  const streamSuccess = (stream) => {
     // Handle stream success
+    console.log(stream);
     localVideoRef.current.srcObject = stream;
 
     const track = stream.getVideoTracks()[0];
@@ -79,6 +80,7 @@ const App = () => {
 
   const getLocalStream = async () => {
     // Get local stream logic
+
     navigator.mediaDevices
       .getUserMedia({
         audio: false,
@@ -140,11 +142,11 @@ const App = () => {
       // The server sends back params needed
       // to create Send Transport on the client side
       if (params.error) {
-        console.log(params.error);
+        console.log("에러", params.error);
         return;
       }
 
-      console.log(params);
+      console.log("정상", params);
 
       // creates a new WebRTC Transport to send media
       // based on the server's producer transport params
@@ -160,7 +162,7 @@ const App = () => {
           try {
             // Signal local DTLS parameters to the server side transport
             // see server's socket.on('transport-connect', ...)
-            await socket.emit("transport-connect", {
+            socket.emit("transport-connect", {
               dtlsParameters,
             });
 
@@ -180,7 +182,7 @@ const App = () => {
           // with the following parameters and produce
           // and expect back a server side producer id
           // see server's socket.on('transport-produce', ...)
-          await socket.emit(
+          socket.emit(
             "transport-produce",
             {
               kind: parameters.kind,
@@ -400,12 +402,23 @@ const App = () => {
           <tr>
             <td>
               <div id="sharedBtns">
-                <video ref={localVideoRef} autoPlay className="video"></video>
+                <video
+                  style={{ border: "1px solid black" }}
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  className="video"
+                ></video>
               </div>
             </td>
             <td>
               <div id="sharedBtns">
-                <video ref={remoteVideoRef} autoPlay className="video"></video>
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="video"
+                ></video>
               </div>
             </td>
           </tr>
