@@ -13,8 +13,8 @@ const App = () => {
   let producer;
   let consumer;
   let isProducer = false;
-  // const websocketURL = "https://localhost:3001";
-  const websocketURL = "https://3.39.21.142";
+  const websocketURL = "https://localhost:3001";
+  // const websocketURL = "https://3.39.21.142";
 
   // const websocketURL = "https://simsimhae.store";
 
