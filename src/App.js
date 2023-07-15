@@ -12,7 +12,10 @@ const App = () => {
   let consumerTransport;
   let producer;
   let consumer;
-  const websocketURL = "https://localhost:3001";
+  let isProducer = false;
+  // const websocketURL = "https://localhost:3001";
+  const websocketURL = "https://simsimhae.store";
+
   let params = {
     // mediasoup params
     encodings: [
@@ -42,8 +45,8 @@ const App = () => {
   //여기
   const socket = io(`${websocketURL}/mediasoup`);
 
-  socket.on("connection-success", ({ socketId }) => {
-    console.log(socketId);
+  socket.on("connection-success", ({ socketId, existsProducer }) => {
+    console.log(socketId, existsProducer);
   });
 
   const streamSuccess = (stream) => {
@@ -54,28 +57,10 @@ const App = () => {
     const track = stream.getVideoTracks()[0];
     params = {
       track,
-      encodings: [
-        {
-          rid: "r0",
-          maxBitrate: 100000,
-          scalabilityMode: "S1T3",
-        },
-        {
-          rid: "r1",
-          maxBitrate: 300000,
-          scalabilityMode: "S1T3",
-        },
-        {
-          rid: "r2",
-          maxBitrate: 900000,
-          scalabilityMode: "S1T3",
-        },
-      ],
-      codecOptions: {
-        videoGoogleStartBitrate: 1000,
-      },
+      ...params,
     };
 
+    goConnect(true);
     // Continue with the logic using the updated `params` object
   };
 
@@ -102,6 +87,18 @@ const App = () => {
       });
   };
 
+  const goConsume = () => {
+    goConnect(false);
+  };
+
+  const goConnect = (producerOrConsumer) => {
+    isProducer = producerOrConsumer;
+    device === undefined ? getRtpCapabilities() : goCreateTransport();
+  };
+
+  const goCreateTransport = () => {
+    isProducer ? createSendTransport() : createRecvTransport();
+  };
   // A device is an endpoint connecting to a Router on the
   // server side to send/recive media
   const createDevice = async () => {
@@ -127,12 +124,15 @@ const App = () => {
     // make a request to the server for Router RTP Capabilities
     // see server's socket.on('getRtpCapabilities', ...)
     // the server sends back data object which contains rtpCapabilities
-    socket.emit("getRtpCapabilities", (data) => {
+    socket.emit("createRoom", (data) => {
       console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`);
 
       // we assign to local variable and will be used when
       // loading the client Device (see createDevice above)
       rtpCapabilities = data.rtpCapabilities;
+
+      // once we have rtpCapabilities from the Router, create Device
+      createDevice();
     });
   };
 
@@ -200,6 +200,7 @@ const App = () => {
           errback(error);
         }
       });
+      connectSendTransport();
     });
   };
 
@@ -250,7 +251,7 @@ const App = () => {
           try {
             // Signal local DTLS parameters to the server side transport
             // see server's socket.on('transport-recv-connect', ...)
-            await socket.emit("transport-recv-connect", {
+            socket.emit("transport-recv-connect", {
               dtlsParameters,
             });
 
@@ -262,6 +263,7 @@ const App = () => {
           }
         }
       );
+      connectRecvTransport();
     });
   };
 
@@ -269,7 +271,7 @@ const App = () => {
     // for consumer, we need to tell the server first
     // to create a consumer based on the rtpCapabilities and consume
     // if the router can consume, it will send back a set of params as below
-    await socket.emit(
+    socket.emit(
       "consume",
       {
         rtpCapabilities: device.rtpCapabilities,
@@ -427,42 +429,8 @@ const App = () => {
           <tr>
             <td>
               <div id="sharedBtns">
-                <button onClick={getLocalStream}>1. Get Local Video</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td colSpan="2">
-              <div id="sharedBtns">
-                <button onClick={getRtpCapabilities}>
-                  2. Get Rtp Capabilities
-                </button>
-                <br />
-                <button onClick={createDevice}>3. Create Device</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div id="sharedBtns">
-                <button onClick={createSendTransport}>
-                  4. Create Send Transport
-                </button>
-                <br />
-                <button onClick={connectSendTransport}>
-                  5. Connect Send Transport & Produce
-                </button>
-              </div>
-            </td>
-            <td>
-              <div id="sharedBtns">
-                <button onClick={createRecvTransport}>
-                  6. Create Recv Transport
-                </button>
-                <br />
-                <button onClick={connectRecvTransport}>
-                  7. Connect Recv Transport & Consume
-                </button>
+                <button onClick={getLocalStream}>Publish</button>
+                <button onClick={goConsume}>Consume</button>
               </div>
             </td>
           </tr>
