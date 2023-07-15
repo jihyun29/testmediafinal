@@ -13,8 +13,8 @@ const App = () => {
   let producer;
   let consumer;
   let isProducer = false;
-  // const websocketURL = "https://localhost:3001";
-  const websocketURL = "https://simsimhae.store";
+  const websocketURL = "https://localhost:3001";
+  // const websocketURL = "https://simsimhae.store";
 
   let params = {
     // mediasoup params
