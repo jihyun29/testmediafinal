@@ -19,7 +19,7 @@ const App = () => {
   let isProducer = false;
   let videoContainer;
   // const websocketURL = "https://localhost:3001";
-  const websocketURL = "http://3.39.21.142:3000";
+  const websocketURL = "https://3.39.21.142:3000";
 
   // const websocketURL = "https://simsimhae.store";
 
