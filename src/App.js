@@ -67,7 +67,7 @@ const App = () => {
     // Get local stream logic
 
     navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
+      .getUserMedia({ audio: false, video: true })
       .then(streamSuccess)
       .catch((error) => {
         console.log(error.message);
